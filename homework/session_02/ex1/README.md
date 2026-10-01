@@ -1,6 +1,6 @@
 # Bài 1: Thực hành VPS Ubuntu trên AZVPS
 
-> **Trạng thái: Đã có bằng chứng phiên Ubuntu và cấu hình firewall; chưa xác minh xác thực bằng SSH key.**
+> **Trạng thái: Đã xác minh Ubuntu 22.04.5 LTS, tài nguyên VPS, tài khoản và firewall; chưa xác minh xác thực bằng SSH key.**
 > Theo xác nhận của học viên, giảng viên cho phép sử dụng AZVPS thay DigitalOcean. Báo cáo ghi lại môi trường thực tế; không coi VPS AZVPS là Droplet DigitalOcean.
 
 ## 1. Thông tin bài làm
@@ -17,16 +17,18 @@
 | --- | --- |
 | Nhà cung cấp | AZVPS, theo thông tin học viên cung cấp |
 | Máy cá nhân | Windows, dùng Command Prompt trong ảnh kết nối |
-| Hệ điều hành máy chủ | Ubuntu; ảnh hiện có chưa xác định được phiên bản đang chạy |
+| Hệ điều hành máy chủ | Ubuntu 22.04.5 LTS (Jammy Jellyfish), xác minh bằng `/etc/os-release` |
 | Tài khoản trong phiên máy chủ | `phuong` |
 | Hostname hiển thị | `azvps-tm7e8o62g` |
 | Địa chỉ IP | Đã có trong ảnh kết nối gốc; không công khai trong báo cáo |
-| CPU / RAM / Disk | Chưa có thông tin cấu hình xác thực |
+| CPU | 2 vCPU; x86_64; model hiển thị Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz |
+| RAM | `free -h` báo tổng 3.8 GiB; swap 0 B |
+| Phân vùng gốc | `/dev/vda1`, gắn tại `/`, dung lượng hiển thị 30G; đã dùng 5.1G, còn 23G (18% sử dụng) |
 | Datacenter / gói / giá | Chưa có thông tin xác thực từ trang quản lý AZVPS |
 | Phương thức xác thực SSH | Chưa xác minh là SSH key hay mật khẩu |
 | Firewall | UFW active; cho phép OpenSSH với IPv4 và IPv6 |
 
-Thông báo có bản nâng cấp Ubuntu trong ảnh không xác định phiên bản hệ điều hành hiện đang chạy. Báo cáo chưa xác nhận máy chủ đáp ứng yêu cầu Ubuntu 22.04 LTS hoặc mới hơn.
+Kết quả `/etc/os-release` xác nhận máy chủ đáp ứng yêu cầu phiên bản Ubuntu 22.04 LTS hoặc mới hơn. CPU, RAM và dung lượng ở trên là tài nguyên hệ điều hành nhìn thấy; dung lượng phân vùng gốc không xác định tổng dung lượng gói lưu trữ đã mua.
 
 ## 3. Các thao tác đã có bằng chứng
 
@@ -61,14 +63,34 @@ Hai ảnh trên là ảnh thực tế được học viên cung cấp trong cu�
 
 Đề gốc yêu cầu đăng nhập bằng SSH key với tài khoản `root`. Việc cho phép thay nhà cung cấp chưa xác nhận miễn yêu cầu này. Cần bổ sung bằng chứng phù hợp hoặc xác nhận giảng viên cho phép dùng tài khoản `phuong`.
 
-### 4.1. Kiểm tra hệ điều hành và tài khoản
+### 4.1. Kiểm tra hệ điều hành và tài khoản — đã xác minh
 
-Trong phiên SSH, chạy các lệnh sau và lưu kết quả thực tế:
+Học viên đã gửi ảnh kết quả của `cat /etc/os-release`, `lscpu | head -n 15`, `free -h`, `df -h /` và `whoami`. Các giá trị chính được chép lại từ ảnh, không phải log mới do người viết báo cáo chạy:
 
-```sh
-whoami
-cat /etc/os-release
+```text
+/etc/os-release:
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+
+lscpu (trích):
+Architecture: x86_64
+CPU(s): 2
+Model name: Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz
+
+free -h (trích):
+Mem total: 3.8Gi
+Swap total: 0B
+
+df -h /:
+Filesystem  Size  Used  Avail  Use%  Mounted on
+/dev/vda1    30G  5.1G    23G   18%  /
+
+whoami:
+phuong
 ```
+
+Các chỉ số dung lượng đã dùng/còn trống là tại thời điểm chụp. Kết quả `whoami` chứng minh tài khoản hiện tại là `phuong`, chưa chứng minh phương thức xác thực hoặc đăng nhập `root`.
 
 ### 4.2. Xác minh đăng nhập bằng SSH key
 
@@ -85,7 +107,7 @@ Lệnh này chỉ thử phương thức public key. Khóa có passphrase vẫn c
 ### 4.3. Bổ sung thông tin triển khai
 
 - Ngày thực hành.
-- Cấu hình, region, gói và giá VPS từ trang quản lý AZVPS.
+- Region, tên gói và giá VPS từ trang quản lý AZVPS; tài nguyên hệ điều hành đã được xác minh ở trên.
 - Các bước tạo VPS và thiết lập public key đã thực sự thực hiện.
 - Kết quả xác minh SSH key và tài khoản dùng để nộp bài.
 
@@ -94,16 +116,16 @@ Lệnh này chỉ thử phương thức public key. Khóa có passphrase vẫn c
 | Yêu cầu | Trạng thái |
 | --- | --- |
 | Nhà cung cấp DigitalOcean | Được thay bằng AZVPS theo xác nhận của học viên về sự cho phép của giảng viên |
-| Ubuntu 22.04 LTS hoặc mới hơn | Có phiên Ubuntu; cần xác minh phiên bản |
+| Ubuntu 22.04 LTS hoặc mới hơn | Đạt: Ubuntu 22.04.5 LTS, xác minh từ `/etc/os-release` |
 | Singapore và cấu hình tiết kiệm | Chưa có bằng chứng; cần ghi cấu hình thực tế và yêu cầu thay thế được chấp nhận |
 | Tạo và sử dụng cặp khóa SSH | Chưa có bằng chứng |
 | Kết nối SSH từ máy cá nhân | Có ảnh lệnh kết nối và ảnh phiên Ubuntu trong tài liệu gốc |
 | Đăng nhập bằng root | Ảnh hiện có dùng `phuong`; cần kiểm tra lại yêu cầu |
-| Bằng chứng thực hành | Đã đính kèm ảnh phiên Ubuntu và UFW |
+| Bằng chứng thực hành | Đã đính kèm ảnh phiên Ubuntu, UFW và ghi các kết quả kiểm tra hệ thống từ ảnh học viên cung cấp |
 | Đúng thư mục GitHub | `homework/session_02/ex1/README.md` |
 
 ## 6. Kết quả hiện tại
 
-Đã có phiên làm việc Ubuntu với tài khoản `phuong` và firewall hoạt động, cho phép SSH. Báo cáo chưa đánh dấu hoàn thành bài SSH-key cho đến khi bổ sung kết quả xác minh thực tế và các thông tin còn thiếu.
+Đã xác minh Ubuntu 22.04.5 LTS, 2 vCPU, 3.8 GiB RAM, phân vùng gốc 30G, tài khoản `phuong` và firewall hoạt động, cho phép SSH. Báo cáo chưa đánh dấu hoàn thành bài SSH-key cho đến khi bổ sung kết quả xác minh thực tế và các thông tin còn thiếu.
 
 
